@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -64,7 +65,7 @@ func (conn *EtcdConnection) getDeletedAddress(prefix string) ([]byte, bool, int6
 		return []byte{}, false, 0, nil
 	}
 
-	return getRes.Kvs[0].Key, true, getRes.Kvs[0].Version, nil
+	return bytes.TrimPrefix(getRes.Kvs[0].Key, []byte(addrKeyPrefixes.DeletedAddress)), true, getRes.Kvs[0].Version, nil
 }
 
 func (conn *EtcdConnection) addressIsHardcoded(prefix string, address []byte) (bool, error) {
@@ -369,7 +370,7 @@ func (conn *EtcdConnection) createGeneratedAddressWithRetries(prefix string, nam
 		clientv3.Compare(clientv3.Version(addrKeyPrefixes.HardcodedAddress + string(nextAddr)), "=", 0),
 		clientv3.Compare(clientv3.Version(addrKeyPrefixes.Name + name), "=", 0),
 	).Then(
-		clientv3.OpDelete(addrKeyPrefixes.GeneratedAddress + string(nextAddr)),
+		clientv3.OpPut(addrKeyPrefixes.GeneratedAddress + string(nextAddr), name),
 		clientv3.OpPut(addrRangeKeys.NextAddress, string(incAddr(nextAddr))),
 		clientv3.OpPut(addrKeyPrefixes.Name + name, string(nextAddr)),
 	)

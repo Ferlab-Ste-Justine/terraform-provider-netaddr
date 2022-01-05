@@ -27,10 +27,10 @@ resource "netaddr_address" "mac_test" {
     name = "test3"
 }
 
-/*resource "netaddr_address" "mac_test2" {
+resource "netaddr_address" "mac_test2" {
     range_id = netaddr_range.mac.id
     name = "test4"
-}*/
+}
 
 output "test" {
   value = netaddr_address.ipv4_test.address
@@ -44,6 +44,6 @@ output "test3" {
   value = netaddr_address.mac_test.address
 }
 
-/*output "test4" {
+output "test4" {
   value = netaddr_address.mac_test2.address
-}*/
+}
