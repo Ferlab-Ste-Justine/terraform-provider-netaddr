@@ -1,0 +1,7 @@
+info.txt
+terraform-provider-netaddr
+test-environment/*/certs/
+test-environment/*/.terraform/
+test-environment/*/.terraform.lock.hcl
+test-environment/*/terraform.tfstate
+test-environment/*/terraform.tfstate.backup
