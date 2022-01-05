@@ -41,19 +41,6 @@ func Ipv4BytesToString(ipv4 []byte) string {
 	return net.IP(ipv4).String()
 }
 
-func Ipv6StringToBytes(ipv6 string) ([]byte, error) {
-	byteRepr := net.ParseIP(ipv6)
-	if byteRepr == nil || byteRepr.To16() == nil {
-		return []byte{}, errors.New(fmt.Sprintf("%s is not a valid ipv6 address", ipv6))
-	}
-
-	return []byte(byteRepr), nil
-}
-
-func Ipv6BytesToString(ipv6 []byte) string {
-	return net.IP(ipv6).String()
-}
-
 func MacStringToBytes(mac string) ([]byte, error) {
 	byteRepr, err := net.ParseMAC(mac)
 	if err != nil {
@@ -80,4 +67,17 @@ func AddressLessThan(addr []byte, otherAddress []byte) bool {
 func AddressGreaterThan(addr []byte, otherAddress []byte) bool {
 	cmp := bytes.Compare(addr, otherAddress)
 	return cmp == 1
+}
+
+func Ipv6StringToBytes(ipv6 string) ([]byte, error) {
+	byteRepr := net.ParseIP(ipv6)
+	if byteRepr == nil || byteRepr.To16() == nil {
+		return []byte{}, errors.New(fmt.Sprintf("%s is not a valid ipv6 address", ipv6))
+	}
+
+	return []byte(byteRepr), nil
+}
+
+func Ipv6BytesToString(ipv6 []byte) string {
+	return net.IP(ipv6).String()
 }

@@ -77,14 +77,12 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"netaddr_ipv4": resourceNetAddrIpv4(),
-			"netaddr_mac": resourceNetAddrMac(),
-			"netaddr_network": resourceNetAddrNetwork(),
+			"netaddr_address": resourceNetAddrAddress(),
+			"netaddr_range": resourceNetAddrRange(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			//"netaddr_ipv4": dataSourceNetAddrIpv4(),
-			//"netaddr_mac": dataSourceNetAddrMac(),
-			//"netaddr_network": dataSourceNetAddrNetwork(),
+			//"netaddr_address": dataSourceNetAddrAddress(),
+			//"netaddr_range": dataSourceNetAddrRange(),
 		},
 		ConfigureFunc: providerConfigure,
 		//Should implement close once this issue is resolved: https://github.com/hashicorp/terraform-plugin-sdk/issues/63
