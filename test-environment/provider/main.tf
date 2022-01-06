@@ -32,6 +32,17 @@ resource "netaddr_address" "mac_test2" {
     name = "test4"
 }
 
+resource "netaddr_address" "mac_test3" {
+    range_id = netaddr_range.mac.id
+    name = "test5"
+    hardcoded_address = "52:54:00:00:00:02"
+}
+
+resource "netaddr_address" "mac_test4" {
+    range_id = netaddr_range.mac.id
+    name = "test6"
+}
+
 output "test" {
   value = netaddr_address.ipv4_test.address
 }
@@ -46,4 +57,12 @@ output "test3" {
 
 output "test4" {
   value = netaddr_address.mac_test2.address
+}
+
+output "test5" {
+  value = netaddr_address.mac_test3.address
+}
+
+output "test6" {
+  value = netaddr_address.mac_test4.address
 }

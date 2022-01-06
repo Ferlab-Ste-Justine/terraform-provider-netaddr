@@ -56,7 +56,7 @@ func MacBytesToString(mac []byte) string {
 func AddressWithinBoundaries(addr []byte, lower []byte, higher []byte) bool {
 	lowerRangeCmp := bytes.Compare(addr, lower)
 	upperRangeCmp := bytes.Compare(addr, higher)
-	return (lowerRangeCmp == 0 || lowerRangeCmp == -1) && (upperRangeCmp == 0 || upperRangeCmp == 1)
+	return (lowerRangeCmp == 0 || lowerRangeCmp == 1) && (upperRangeCmp == 0 || upperRangeCmp == -1)
 }
 
 func AddressLessThan(addr []byte, otherAddress []byte) bool {

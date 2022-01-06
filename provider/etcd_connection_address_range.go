@@ -119,7 +119,6 @@ func (conn *EtcdConnection) destroyAddrRangeWithRetries(prefix string, retries i
 	}
 
 	return nil
-
 }
 
 func (conn *EtcdConnection) DestroyAddrRange(prefix string) error {
