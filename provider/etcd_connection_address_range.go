@@ -36,7 +36,12 @@ func (conn *EtcdConnection) createAddrRangeWithRetries(prefix string, addrRange 
 	defer cancel()
 
 	rangeKeys := GenerateAddrRangeEtcdKeys(prefix)
-	tx := conn.Client.Txn(ctx).Then(
+	tx := conn.Client.Txn(ctx).If(
+		clientv3.Compare(clientv3.Version(rangeKeys.Type), "=", 0),
+		clientv3.Compare(clientv3.Version(rangeKeys.FirstAddress), "=", 0),
+		clientv3.Compare(clientv3.Version(rangeKeys.LastAddress), "=", 0),
+		clientv3.Compare(clientv3.Version(rangeKeys.NextAddress), "=", 0),
+	).Then(
 		clientv3.OpPut(rangeKeys.Type, string(addrRange.Type)),
 		clientv3.OpPut(rangeKeys.FirstAddress, string(addrRange.FirstAddress)),
 		clientv3.OpPut(rangeKeys.LastAddress, string(addrRange.LastAddress)),
@@ -54,7 +59,7 @@ func (conn *EtcdConnection) createAddrRangeWithRetries(prefix string, addrRange 
 	}
 
 	if !resp.Succeeded {
-		return errors.New(fmt.Sprintf("Failed to address range '%s' for unforeseen reason: Transaction with no condition failed", prefix))
+		return errors.New(fmt.Sprintf("Failed to create address range at prefix '%s': An address range already exists at that prefix", prefix))
 	}
 
 	return nil
