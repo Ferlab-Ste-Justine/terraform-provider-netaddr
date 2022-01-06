@@ -83,8 +83,10 @@ func Provider() *schema.Provider {
 			"netaddr_range_mac": resourceNetAddrRangeMac(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			//"netaddr_address": dataSourceNetAddrAddress(),
-			//"netaddr_range": dataSourceNetAddrRange(),
+			"netaddr_address_ipv4": dataSourceNetAddrAddressIpv4(),
+			"netaddr_address_mac": dataSourceNetAddrAddressMac(),
+			"netaddr_range_ipv4": dataSourceNetAddrRangeIpv4(),
+			"netaddr_range_mac": dataSourceNetAddrRangeMac(),
 		},
 		ConfigureFunc: providerConfigure,
 		//Should implement close once this issue is resolved: https://github.com/hashicorp/terraform-plugin-sdk/issues/63
