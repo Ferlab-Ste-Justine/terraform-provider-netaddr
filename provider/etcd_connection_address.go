@@ -348,7 +348,7 @@ func (conn *EtcdConnection) createGeneratedAddressWithRetries(prefix string, nam
 	}
 
 	for isHardcoded {
-		nextAddr := incAddr(nextAddr)
+		nextAddr = incAddr(nextAddr)
 
 		if addrIsGreater(nextAddr, addrRange.LastAddress) {
 			return []byte{}, errors.New("Error creating generated address: Network ran out of addresses")
