@@ -82,6 +82,20 @@ func (conn *EtcdConnection) addressIsHardcoded(prefix string, address []byte) (b
 	return len(getRes.Kvs) > 0, nil
 }
 
+func (conn *EtcdConnection) addressIsDeleted(prefix string, address []byte) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conn.Timeout)*time.Second)
+	defer cancel()
+
+	addrKeyPrefixes := GenerateAddrEtcdKeyPrefixes(prefix)
+	
+	getRes, err := conn.Client.Get(ctx, addrKeyPrefixes.DeletedAddress + string(address))
+	if err != nil {
+		return false, err
+	}
+
+	return len(getRes.Kvs) > 0, nil
+}
+
 /*
   check before transaction:
     - address is within the range
@@ -114,7 +128,48 @@ func (conn *EtcdConnection) createHardcodedAddressWithRetries(prefix string, nam
 		return errors.New(fmt.Sprintf("Error created hardcoded address '%s': Ip is outside of range boundaries", prettify(address)))
 	}
 
+	isDeleted, isDeletedErr := conn.addressIsDeleted(prefix, address)
+	if isDeletedErr != nil {
+		if !shouldRetry(isDeletedErr, retries) {
+			return isDeletedErr
+		}
+
+		time.Sleep(100 * time.Millisecond)
+		return conn.createHardcodedAddressWithRetries(prefix, name, address, prettify, retries - 1)
+	}
+
 	addrKeyPrefixes := GenerateAddrEtcdKeyPrefixes(prefix)
+
+	if isDeleted {
+		tx := conn.Client.Txn(ctx).If(
+			clientv3.Compare(clientv3.Version(addrKeyPrefixes.DeletedAddress + string(address)), ">", 0),
+			clientv3.Compare(clientv3.Version(addrKeyPrefixes.HardcodedAddress + string(address)), "=", 0),
+			clientv3.Compare(clientv3.Version(addrKeyPrefixes.GeneratedAddress + string(address)), "=", 0),
+			clientv3.Compare(clientv3.Version(addrKeyPrefixes.Name + name), "=", 0),
+		).Then(
+			clientv3.OpDelete(addrKeyPrefixes.DeletedAddress + string(address)),
+			clientv3.OpPut(addrKeyPrefixes.HardcodedAddress + string(address), name),
+			clientv3.OpPut(addrKeyPrefixes.Name + name, string(address)),
+		)
+
+		resp, txErr := tx.Commit()
+		if txErr != nil {
+			if !shouldRetry(txErr, retries) {
+				return txErr
+			}
+
+			time.Sleep(100 * time.Millisecond)
+			return conn.createHardcodedAddressWithRetries(prefix, name, address, prettify, retries - 1)
+		}
+
+		if !resp.Succeeded {
+			return errors.New(fmt.Sprintf("Failed to create hardcoded address '%s': Either address or name is already in use", prettify(address)))
+		}
+
+		return nil
+	}
+
+	
 	tx := conn.Client.Txn(ctx).If(
 		clientv3.Compare(clientv3.Version(addrKeyPrefixes.HardcodedAddress + string(address)), "=", 0),
 		clientv3.Compare(clientv3.Version(addrKeyPrefixes.GeneratedAddress + string(address)), "=", 0),
