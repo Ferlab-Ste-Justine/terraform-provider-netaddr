@@ -9,11 +9,13 @@ data "netaddr_range_mac" "test" {
 data "netaddr_address_mac" "test3" {
     range_id = data.netaddr_range_mac.test.id
     name = "test3"
+    depends_on = [netaddr_address_mac.test3]
 }
 
 data "netaddr_address_mac" "test4" {
     range_id = data.netaddr_range_mac.test.id
     name = "test4"
+    depends_on = [netaddr_address_mac.test4]
 }
 
 

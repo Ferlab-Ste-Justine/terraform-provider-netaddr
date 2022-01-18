@@ -30,30 +30,34 @@ resource "netaddr_range_mac" "test" {
     last_address = "52:54:00:ff:ff:ff"
 }
 
-resource "netaddr_address_mac" "test" {
-    range_id = netaddr_range_mac.test.id
-    name = "test"
-}
-
-resource "netaddr_address_mac" "test2" {
-    range_id = netaddr_range_mac.test.id
-    name = "test2"
-}
-
 resource "netaddr_address_mac" "test3" {
     range_id = netaddr_range_mac.test.id
     name = "test3"
     hardcoded_address = "52:54:00:00:00:02"
 }
 
+resource "netaddr_address_mac" "test" {
+    range_id = netaddr_range_mac.test.id
+    name = "test"
+    depends_on = [netaddr_address_mac.test3]
+}
+
+resource "netaddr_address_mac" "test2" {
+    range_id = netaddr_range_mac.test.id
+    name = "test2"
+    depends_on = [netaddr_address_mac.test3]
+}
+
 resource "netaddr_address_mac" "test4" {
     range_id = netaddr_range_mac.test.id
     name = "test4"
+    depends_on = [netaddr_address_mac.test3]
 }
 
 resource "netaddr_address_mac" "test5" {
     range_id = netaddr_range_mac.test.id
     name = "test5"
+    depends_on = [netaddr_address_mac.test3]
 }
 
 output "mac_test" {
