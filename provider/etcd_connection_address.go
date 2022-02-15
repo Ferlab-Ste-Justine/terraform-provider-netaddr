@@ -526,3 +526,40 @@ func (conn *EtcdConnection) getAddressWithRetries(prefix string, name string, re
 func (conn *EtcdConnection) GetAddress(prefix string, name string) ([]byte, error) {
 	return conn.getAddressWithRetries(prefix, name, conn.Retries)
 }
+
+func (conn *EtcdConnection) getAddressDetailsWithRetries(prefix string, name string, retries int) (bool, bool, []byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conn.Timeout)*time.Second)
+	defer cancel()
+
+	addrKeyPrefixes := GenerateAddrEtcdKeyPrefixes(prefix)
+
+	getRes, err := conn.Client.Get(ctx, addrKeyPrefixes.Name + name)
+	if err != nil {
+		if !shouldRetry(err, retries) {
+			return false, false, []byte{}, err
+		}
+
+		time.Sleep(100 * time.Millisecond)
+		return conn.getAddressDetailsWithRetries(prefix, name, retries - 1)
+	}
+
+	if len(getRes.Kvs) == 0 {
+		return false, false, []byte{}, nil
+	}
+
+	isHardcoded, isHardcodedErr := conn.addressIsHardcoded(prefix, getRes.Kvs[0].Value)
+	if isHardcodedErr != nil {
+		if !shouldRetry(isHardcodedErr, retries) {
+			return false, false, []byte{}, isHardcodedErr
+		}
+
+		time.Sleep(100 * time.Millisecond)
+		return conn.getAddressDetailsWithRetries(prefix, name, retries - 1)
+	}
+
+	return true, isHardcoded, getRes.Kvs[0].Value, nil
+}
+
+func (conn *EtcdConnection) GetAddressDetails(prefix string, name string) (bool, bool, []byte, error) {
+	return conn.getAddressDetailsWithRetries(prefix, name, conn.Retries)
+}

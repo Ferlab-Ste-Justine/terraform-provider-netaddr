@@ -59,21 +59,27 @@ func Provider() *schema.Provider {
 			},
 			"connection_timeout": &schema.Schema{
 				Description: "Timeout to establish the etcd servers connection in seconds. Defaults to 10.",
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  10,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     10,
 			},
 			"request_timeout": &schema.Schema{
 				Description: "Timeout for individual requests the provider makes on the etcd servers in seconds. Defaults to 10.",
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  10,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     10,
 			},
 			"retries": &schema.Schema{
 				Description: "Number of times operations that result in retriable errors should be re-attempted. Defaults to 10.",
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  10,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     10,
+			},
+			"strict": &schema.Schema{
+				Description: "Whether the provider should trigger a failure if resources are already existing during their creation, already absent during their deletion or otherwise absent during reads. Setting this value to false is convenient, but it might not alert you of bad failure situations (like resource name duplicates or the etcd state being tampered outside of terraform) so we recommend using this setting only to recover for failure situations that are well understood like Terraform having failed to persist its state in a previous apply.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -103,6 +109,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	connectionTimeout, _ := d.Get("connection_timeout").(int)
 	requestTimeout, _ := d.Get("request_timeout").(int)
 	retries, _ := d.Get("retries").(int)
+	strict, _ := d.Get("strict").(bool)
 	tlsConf := &tls.Config{}
 
 	if cert != "" {
@@ -143,5 +150,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		Client:  cli,
 		Timeout: requestTimeout,
 		Retries: retries,
+		Strict: strict,
 	}, nil
 }

@@ -1,4 +1,5 @@
 //Invalid address range, key prefix already taken
+//Note: Will pass if strict is true
 /*resource "netaddr_range_ipv4" "invalid" {
     key_prefix = "/test/ipv4/"
     first_address = "192.169.0.1"
@@ -12,6 +13,7 @@
 }*/
 
 //Invalid mac address, name already taken
+//Note: Will pass if strict is true
 /*resource "netaddr_address_mac" "invalid2" {
     range_id = netaddr_range_mac.test.id
     name = "test5"

@@ -10,6 +10,7 @@ type EtcdConnection struct {
 	Client  *clientv3.Client
 	Timeout int
 	Retries int
+	Strict  bool
 }
 
 func shouldRetry(err error, retries int) bool {

@@ -1,6 +1,7 @@
 package provider
 
 import(
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,21 @@ func resourceNetAddrRangeCreate(d *schema.ResourceData, meta interface{}, rangeT
 		LastAddress: lastAddrBytes,
 	}
 
+	if !conn.Strict {
+		addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(keyPrefix.(string))
+		if addrRangeErr != nil {
+			return errors.New(fmt.Sprintf("Error retrieving address range details in non-strict mode: %s", addrRangeErr.Error()))
+		}
+
+		if addrRangeExists {
+			if (!bytes.Equal(firstAddrBytes, addrRange.FirstAddress)) || (!bytes.Equal(lastAddrBytes, addrRange.LastAddress)) {
+				return errors.New(fmt.Sprintf("Error creating address range in non-strict mode: Pre-existing address range doesn't match specified address range"))
+			}
+			d.SetId(keyPrefix.(string))
+			return resourceNetAddrRangeRead(d, meta, rangeType, prettify)
+		}
+	}
+
 	creationErr := conn.CreateAddrRange(keyPrefix.(string), addrRange)
 	if creationErr != nil {
 		return errors.New(fmt.Sprintf("Error creating address range: %s", creationErr.Error()))
@@ -44,6 +60,11 @@ func resourceNetAddrRangeRead(d *schema.ResourceData, meta interface{}, rangeTyp
 
 	addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(keyPrefix)
 	if !addrRangeExists {
+		if !conn.Strict {
+			d.SetId("")
+			return nil
+		}
+		
 		return errors.New(fmt.Sprintf("Error retrieving address range at prefix '%s': Range does not exist", keyPrefix))
 	}
 	if addrRangeErr != nil {
@@ -63,6 +84,17 @@ func resourceNetAddrRangeRead(d *schema.ResourceData, meta interface{}, rangeTyp
 func resourceNetAddrRangeDelete(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(EtcdConnection)
 	keyPrefix, _ := d.GetOk("key_prefix")
+
+	if !conn.Strict {
+		_, addrRangeExists, addrRangeErr := conn.GetAddrRange(keyPrefix.(string))
+		if addrRangeErr != nil {
+			return errors.New(fmt.Sprintf("Error retrieving address range details in non-strict mode: %s", addrRangeErr.Error()))
+		}
+
+		if !addrRangeExists {
+			return nil
+		}
+	}
 
 	err := conn.DestroyAddrRange(keyPrefix.(string))
 	if err != nil {
