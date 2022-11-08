@@ -1,36 +1,36 @@
 //Invalid address range, key prefix already taken
 //Note: Will pass if strict is true
 /*resource "netaddr_range_ipv4" "invalid" {
-    key_prefix = "/test/ipv4/"
+    key_prefix = "/test/basic-ipv4/"
     first_address = "192.169.0.1"
     last_address = "192.169.2.254"
 }*/
 
 //Invalid mac address, uses network of wrong type
-/*resource "netaddr_address_mac" "invalid" {
-    range_id = netaddr_range_ipv4.test.id
-    name = "test6"
+/*resource "netaddr_address_mac" "invalid_wrong_type" {
+    range_id = netaddr_range_ipv4.basic_ipv4.id
+    name = "invalid-addr1"
 }*/
 
 //Invalid mac address, name already taken
 //Note: Will pass if strict is true
-/*resource "netaddr_address_mac" "invalid2" {
-    range_id = netaddr_range_mac.test.id
-    name = "test5"
+/*resource "netaddr_address_mac" "invalid_name_taken" {
+    range_id = netaddr_range_mac.basic_mac.id
+    name = "addr1"
 }*/
 
 //Invalid mac address, hardcoded address already taken by generated address
-/*resource "netaddr_address_mac" "invalid3" {
-    range_id = netaddr_range_mac.test.id
-    name = "test6"
+/*resource "netaddr_address_mac" "invalid_addr_taken" {
+    range_id = netaddr_range_mac.basic_mac.id
+    name = "invalid-addr2"
     hardcoded_address = "52:54:00:00:00:01"
 }*/
 
 //Invalid mac address, hardcoded address already taken by another hardcoded address
-/*resource "netaddr_address_mac" "invalid3" {
-    range_id = netaddr_range_mac.test.id
-    name = "test6"
-    hardcoded_address = "52:54:00:00:00:01"
+/*resource "netaddr_address_mac" "invalid_addr_taken_take2" {
+    range_id = netaddr_range_mac.basic_mac.id
+    name = "invalid-addr3"
+    hardcoded_address = "52:54:00:00:00:02"
 }*/
 
 //Invalid, range will run out of addresses
