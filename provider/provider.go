@@ -89,6 +89,8 @@ func Provider() *schema.Provider {
 			"netaddr_range_mac": resourceNetAddrRangeMac(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"netaddr_address_list_ipv4": dataSourceNetAddrAddressListIpv4(),
+			"netaddr_address_list_mac": dataSourceNetAddrAddressListMac(),
 			"netaddr_address_ipv4": dataSourceNetAddrAddressIpv4(),
 			"netaddr_address_mac": dataSourceNetAddrAddressMac(),
 			"netaddr_range_ipv4": dataSourceNetAddrRangeIpv4(),

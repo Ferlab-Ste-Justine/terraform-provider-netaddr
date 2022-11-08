@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"strings"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -94,6 +95,39 @@ func (conn *EtcdConnection) addressIsDeleted(prefix string, address []byte) (boo
 	}
 
 	return len(getRes.Kvs) > 0, nil
+}
+
+type AddressListEntry struct {
+	Name string
+	Address []byte
+}
+
+func (conn *EtcdConnection) getAddressListWithRetries(prefix string, retries int) ([]AddressListEntry, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conn.Timeout)*time.Second)
+	defer cancel()
+
+	addrKeyPrefixes := GenerateAddrEtcdKeyPrefixes(prefix)
+
+	getRes, err := conn.Client.Get(ctx, addrKeyPrefixes.Name, clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend))
+	if err != nil {
+		if !shouldRetry(err, retries) {
+			return []AddressListEntry{}, err
+		}
+
+		time.Sleep(100 * time.Millisecond)
+		return conn.getAddressListWithRetries(prefix, retries - 1)
+	}
+
+	listing := make([]AddressListEntry, len(getRes.Kvs))
+	for idx, val := range getRes.Kvs {
+		listing[idx] = AddressListEntry{strings.TrimPrefix(string(val.Key), addrKeyPrefixes.Name), val.Value}
+	}
+
+	return listing, nil
+}
+
+func (conn *EtcdConnection) GetAddressList(prefix string) ([]AddressListEntry, error) {
+	return conn.getAddressListWithRetries(prefix, conn.Retries)
 }
 
 /*
