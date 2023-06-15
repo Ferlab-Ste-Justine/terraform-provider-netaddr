@@ -5,3 +5,4 @@ test-environment/*/.terraform/
 test-environment/*/.terraform.lock.hcl
 test-environment/*/terraform.tfstate
 test-environment/*/terraform.tfstate.backup
+test-environment/*/terraform.tfvars
