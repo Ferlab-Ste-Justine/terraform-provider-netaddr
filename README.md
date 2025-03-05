@@ -79,7 +79,7 @@ Addresses are modeled in etcd with the following two constructs: **address range
 
 **Addresses** have the following entries:
 - **Name**:
-  - **key**: `<user prefix>data/<user defined name>`
+  - **key**: `<user prefix>data/name/<user defined name>`
   - **Content**: Address
   - **description**: Entry present for all assigned addresses giving the address for a given user defined name/label for the address.
 - **GeneratedAddress**: 
