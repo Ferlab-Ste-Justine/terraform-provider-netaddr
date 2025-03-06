@@ -37,18 +37,5 @@ func dataSourceNetAddrRangeUsageIpv4() *schema.Resource {
 
 
 func dataSourceNetAddrRangeUsageIpv4Read(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(EtcdConnection)
-	keyPrefix := d.Get("key_prefix").(string)
-
-	usage, usageErr := conn.GetAddressRangeUsage(keyPrefix, Ipv4RangeAddressCount)
-	if usageErr != nil {
-		return usageErr
-	}
-
-	d.SetId(keyPrefix)
-	d.Set("capacity", usage.Capacity)
-	d.Set("used_capacity", usage.UsedCapacity)
-	d.Set("free_capacity", usage.FreeCapacity)
-
-	return nil
+	return dataSourceNetAddrRangeUsageRead(d, meta, "ipv4", Ipv4RangeAddressCount)
 }
