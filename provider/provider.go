@@ -95,6 +95,7 @@ func Provider() *schema.Provider {
 			"netaddr_address_mac": dataSourceNetAddrAddressMac(),
 			"netaddr_range_ipv4": dataSourceNetAddrRangeIpv4(),
 			"netaddr_range_mac": dataSourceNetAddrRangeMac(),
+			"netaddr_range_usage_ipv4": dataSourceNetAddrRangeUsageIpv4(),
 		},
 		ConfigureFunc: providerConfigure,
 		//Should implement close once this issue is resolved: https://github.com/hashicorp/terraform-plugin-sdk/issues/63

@@ -22,6 +22,14 @@ type AddrRangeEtcdKeys struct {
 	NextAddress  string
 }
 
+type AddrRangeUsage struct {
+	Capacity     int64
+	UsedCapacity int64
+	FreeCapacity int64
+}
+
+type RangeAddressCount func([]byte, []byte) int64
+
 func GenerateAddrRangeEtcdKeys(rangePrefix string) AddrRangeEtcdKeys {
 	return AddrRangeEtcdKeys{
 		Type: rangePrefix + "info/type",
@@ -128,4 +136,27 @@ func (conn *EtcdConnection) destroyAddrRangeWithRetries(prefix string, retries i
 
 func (conn *EtcdConnection) DestroyAddrRange(prefix string) error {
 	return conn.destroyAddrRangeWithRetries(prefix, conn.Retries)
+}
+
+func (conn *EtcdConnection) GetAddressRangeUsage(prefix string, rangeAddrCount RangeAddressCount) (AddrRangeUsage, error) {
+	addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(prefix)
+	if !addrRangeExists {
+		return AddrRangeUsage{}, errors.New(fmt.Sprintf("Error retrieving address range at prefix '%s': Range does not exist", prefix))
+	}
+	if addrRangeErr != nil {
+		return AddrRangeUsage{}, addrRangeErr
+	}
+
+	capacity := rangeAddrCount(addrRange.FirstAddress, addrRange.LastAddress)
+	
+	addrList, addrListErr := conn.GetAddressList(prefix)
+	if addrListErr != nil {
+		return AddrRangeUsage{}, addrListErr
+	}
+
+	return AddrRangeUsage{
+		Capacity: capacity,
+		UsedCapacity: int64(len(addrList)),
+		FreeCapacity: capacity - int64(len(addrList)),
+	}, nil
 }

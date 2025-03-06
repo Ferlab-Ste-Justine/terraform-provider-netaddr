@@ -2,6 +2,7 @@ package provider
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
@@ -37,6 +38,10 @@ func Ipv4StringToBytes(ipv4 string) ([]byte, error) {
 	return []byte(byteRepr), nil
 }
 
+func Ipv4BytesTo4(ipv4 []byte) []byte {
+	return net.IP(ipv4).To4()
+}
+
 func Ipv4BytesToString(ipv4 []byte) string {
 	return net.IP(ipv4).String()
 }
@@ -67,6 +72,10 @@ func AddressLessThan(addr []byte, otherAddress []byte) bool {
 func AddressGreaterThan(addr []byte, otherAddress []byte) bool {
 	cmp := bytes.Compare(addr, otherAddress)
 	return cmp == 1
+}
+
+func Ipv4RangeAddressCount(firstAddr []byte, lastAddr []byte) int64 {
+	return int64(binary.BigEndian.Uint32(Ipv4BytesTo4(lastAddr))) - int64(binary.BigEndian.Uint32(Ipv4BytesTo4(firstAddr))) + int64(1)
 }
 
 func Ipv6StringToBytes(ipv6 string) ([]byte, error) {
