@@ -17,22 +17,17 @@ Retrieves all ipv4 addresses in a range.
 
 ### Required
 
-- **range_id** (String) Identifier of the address range to get the addresses from.
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `range_id` (String) Identifier of the address range to get the addresses from.
 
 ### Read-Only
 
-- **addresses** (List of Object) List of addresses in the range. (see [below for nested schema](#nestedatt--addresses))
+- `addresses` (List of Object) List of addresses in the range. (see [below for nested schema](#nestedatt--addresses))
+- `id` (String) The ID of this resource.
 
 <a id="nestedatt--addresses"></a>
 ### Nested Schema for `addresses`
 
 Read-Only:
 
-- **address** (String)
-- **name** (String)
-
-
+- `address` (String)
+- `name` (String)

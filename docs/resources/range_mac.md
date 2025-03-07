@@ -25,12 +25,10 @@ resource "netaddr_range_mac" "test" {
 
 ### Required
 
-- **first_address** (String) First assignable address in the range.
-- **key_prefix** (String) Etcd key prefix for all the keys related to the range.
-- **last_address** (String) Last assignable address in the range.
+- `first_address` (String) First assignable address in the range.
+- `key_prefix` (String) Etcd key prefix for all the keys related to the range.
+- `last_address` (String) Last assignable address in the range.
 
-### Optional
+### Read-Only
 
-- **id** (String) The ID of this resource.
-
-
+- `id` (String) The ID of this resource.

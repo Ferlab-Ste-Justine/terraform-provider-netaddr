@@ -44,16 +44,14 @@ output "test2_addr" {
 
 ### Required
 
-- **name** (String) Name to associate with the address.
-- **range_id** (String) Identifier of the address range the address is tied to.
+- `name` (String) Name to associate with the address.
+- `range_id` (String) Identifier of the address range the address is tied to.
 
 ### Optional
 
-- **hardcoded_address** (String) An optional input to fixate the address to a specific value.
-- **id** (String) The ID of this resource.
+- `hardcoded_address` (String) An optional input to fixate the address to a specific value.
 
 ### Read-Only
 
-- **address** (String) The address that got assigned to the resource.
-
-
+- `address` (String) The address that got assigned to the resource.
+- `id` (String) The ID of this resource.

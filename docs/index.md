@@ -26,13 +26,13 @@ provider "etcd" {
 
 ### Optional
 
-- **ca_cert** (String) File that contains the CA certificate that signed the etcd servers' certificates. Can alternatively be set with the ETCDCTL_CACERT environment variable. Can also be omitted.
-- **cert** (String) File that contains the client certificate used to authentify the user. Can alternatively be set with the ETCDCTL_CERT environment variable. Can be omitted if password authentication is used.
-- **connection_timeout** (Number) Timeout to establish the etcd servers connection in seconds. Defaults to 10.
-- **endpoints** (String) Endpoints of the etcd servers. The entry of each server should follow the ip:port format and be coma separated. Can alternatively be set with the ETCDCTL_ENDPOINTS environment variable.
-- **key** (String) File that contains the client encryption key used to authentify the user. Can alternatively be set with the ETCDCTL_KEY environment variable. Can be omitted if password authentication is used.
-- **password** (String, Sensitive) Password of the etcd user that will be used to access etcd. Can alternatively be set with the ETCDCTL_PASSWORD environment variable. Can also be omitted if tls certificate authentication will be used instead.
-- **request_timeout** (Number) Timeout for individual requests the provider makes on the etcd servers in seconds. Defaults to 10.
-- **retries** (Number) Number of times operations that result in retriable errors should be re-attempted. Defaults to 10.
-- **strict** (Boolean) Whether the provider should trigger a failure if resources are already existing during their creation, already absent during their deletion or otherwise absent during reads. Setting this value to false is convenient, but it might not alert you of bad failure situations (like resource name duplicates or the etcd state being tampered outside of terraform) so we recommend using this setting only to recover for failure situations that are well understood like Terraform having failed to persist its state in a previous apply.
-- **username** (String) Name of the etcd user that will be used to access etcd. Can alternatively be set with the ETCDCTL_USERNAME environment variable. Can also be omitted if tls certificate authentication will be used instead as the username will be infered from the certificate.
+- `ca_cert` (String) File that contains the CA certificate that signed the etcd servers' certificates. Can alternatively be set with the ETCDCTL_CACERT environment variable. Can also be omitted.
+- `cert` (String) File that contains the client certificate used to authentify the user. Can alternatively be set with the ETCDCTL_CERT environment variable. Can be omitted if password authentication is used.
+- `connection_timeout` (Number) Timeout to establish the etcd servers connection in seconds. Defaults to 10.
+- `endpoints` (String) Endpoints of the etcd servers. The entry of each server should follow the ip:port format and be coma separated. Can alternatively be set with the ETCDCTL_ENDPOINTS environment variable.
+- `key` (String) File that contains the client encryption key used to authentify the user. Can alternatively be set with the ETCDCTL_KEY environment variable. Can be omitted if password authentication is used.
+- `password` (String, Sensitive) Password of the etcd user that will be used to access etcd. Can alternatively be set with the ETCDCTL_PASSWORD environment variable. Can also be omitted if tls certificate authentication will be used instead.
+- `request_timeout` (Number) Timeout for individual requests the provider makes on the etcd servers in seconds. Defaults to 10.
+- `retries` (Number) Number of times operations that result in retriable errors should be re-attempted. Defaults to 10.
+- `strict` (Boolean) Whether the provider should trigger a failure if resources are already existing during their creation, already absent during their deletion or otherwise absent during reads. Setting this value to false is convenient, but it might not alert you of bad failure situations (like resource name duplicates or the etcd state being tampered outside of terraform) so we recommend using this setting only to recover for failure situations that are well understood like Terraform having failed to persist its state in a previous apply.
+- `username` (String) Name of the etcd user that will be used to access etcd. Can alternatively be set with the ETCDCTL_USERNAME environment variable. Can also be omitted if tls certificate authentication will be used instead as the username will be infered from the certificate.

@@ -32,15 +32,10 @@ output "data_mac_test" {
 
 ### Required
 
-- **name** (String) Name of the address.
-- **range_id** (String) Identifier of the address range the address is tied to.
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `name` (String) Name of the address.
+- `range_id` (String) Identifier of the address range the address is tied to.
 
 ### Read-Only
 
-- **address** (String) The address that got assigned to the resource.
-
-
+- `address` (String) The address that got assigned to the resource.
+- `id` (String) The ID of this resource.

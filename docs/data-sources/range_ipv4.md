@@ -27,15 +27,10 @@ output "data_range_ipv4_test" {
 
 ### Required
 
-- **key_prefix** (String) Etcd key prefix for address range.
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `key_prefix` (String) Etcd key prefix for address range.
 
 ### Read-Only
 
-- **first_address** (String) First assignable address in the range.
-- **last_address** (String) Last assignable address in the range.
-
-
+- `first_address` (String) First assignable address in the range.
+- `id` (String) The ID of this resource.
+- `last_address` (String) Last assignable address in the range.
