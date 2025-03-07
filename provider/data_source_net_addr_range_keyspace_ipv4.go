@@ -10,6 +10,12 @@ func dataSourceNetAddrRangeKeyspaceIpv4() *schema.Resource {
 		Description: "Retrieves the lower level keyspace details of an ipv4 addresses space. See github repo README for details about the keyspace",
 		Read: dataSourceNetAddrRangeKeyspaceIpv4Read,
 		Schema: map[string]*schema.Schema{
+			"range_id": &schema.Schema{
+				Description: "Identifier of the address range to get the key space from.",
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 			"first_address": {
 				Description: "First assignable address in the range.",
 				Type:         schema.TypeString,

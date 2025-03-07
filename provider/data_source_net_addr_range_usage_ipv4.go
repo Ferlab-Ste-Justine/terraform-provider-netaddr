@@ -10,8 +10,8 @@ func dataSourceNetAddrRangeUsageIpv4() *schema.Resource {
 		Description: "Retrieves ipv4 addresses utilisation data on an address range.",
 		Read: dataSourceNetAddrRangeUsageIpv4Read,
 		Schema: map[string]*schema.Schema{
-			"key_prefix": &schema.Schema{
-				Description: "Etcd key prefix for address range.",
+			"range_id": &schema.Schema{
+				Description: "Identifier of the address range to get the capacity from.",
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringIsNotEmpty,

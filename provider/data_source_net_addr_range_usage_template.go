@@ -9,7 +9,7 @@ import (
 
 func dataSourceNetAddrRangeUsageRead(d *schema.ResourceData, meta interface{}, rangeType string, rangeAddrCount RangeAddressCount) error {
 	conn := meta.(EtcdConnection)
-	keyPrefix := d.Get("key_prefix").(string)
+	keyPrefix := d.Get("range_id").(string)
 
 	addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(keyPrefix)
 	if !addrRangeExists {

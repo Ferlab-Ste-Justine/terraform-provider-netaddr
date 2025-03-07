@@ -8,18 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-/*
-	Type               string
-	FirstAddress       []byte
-	LastAddress        []byte
-	NextAddress        []byte
-	Names              []AddressListEntry
-	GeneratedAddresses []AddressListEntry
-	HardcodedAddresses []AddressListEntry
-	DeletedAddresses   []AddressListEntry
-*/
-
-
 func dataSourceNetAddrRangeKeyspaceRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify PrettifyAddr) error {
 	conn := meta.(EtcdConnection)
 	keyPrefix := d.Get("range_id").(string)
