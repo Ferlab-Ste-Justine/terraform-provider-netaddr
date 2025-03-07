@@ -138,7 +138,7 @@ func (conn *EtcdConnection) DestroyAddrRange(prefix string) error {
 	return conn.destroyAddrRangeWithRetries(prefix, conn.Retries)
 }
 
-func (conn *EtcdConnection) GetAddressRangeUsage(prefix string, rangeAddrCount RangeAddressCount) (AddrRangeUsage, error) {
+func (conn *EtcdConnection) GetAddrRangeUsage(prefix string, rangeAddrCount RangeAddressCount) (AddrRangeUsage, error) {
 	addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(prefix)
 	if !addrRangeExists {
 		return AddrRangeUsage{}, errors.New(fmt.Sprintf("Error retrieving address range at prefix '%s': Range does not exist", prefix))

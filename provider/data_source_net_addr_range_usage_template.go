@@ -22,7 +22,7 @@ func dataSourceNetAddrRangeUsageRead(d *schema.ResourceData, meta interface{}, r
 		return errors.New(fmt.Sprintf("Error retrieving address range at prefix '%s': Range type doesn't match", keyPrefix))
 	}
 
-	usage, usageErr := conn.GetAddressRangeUsage(keyPrefix, Ipv4RangeAddressCount)
+	usage, usageErr := conn.GetAddrRangeUsage(keyPrefix, Ipv4RangeAddressCount)
 	if usageErr != nil {
 		return usageErr
 	}
