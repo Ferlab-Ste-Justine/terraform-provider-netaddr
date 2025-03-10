@@ -4,6 +4,7 @@ import(
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -45,6 +46,22 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 				if !bytes.Equal(setAddrAsBytes, addr) {
 					return errors.New(fmt.Sprintf("Error creating hardcoded address in non-strict mode at prefix '%s': Pre-existing address doesn't match set address value", keyPrefix))
 				}
+
+				log.Printf(fmt.Sprintf(
+					"[WARN] Creating resource for pre-existing hardcoded address of type '%s', name '%s' and address '%s' in range '%s'", 
+					addrRange.Type,
+					name.(string),
+					hAddr.(string),
+					keyPrefix.(string),
+				))
+			} else {
+				log.Printf(fmt.Sprintf(
+					"[WARN] Creating resource for pre-existing generated address of type '%s', name '%s' and address '%s' in range '%s'", 
+					addrRange.Type,
+					name.(string),
+					prettify(addr),
+					keyPrefix.(string),
+				))
 			}
 
 			d.SetId(name.(string))
@@ -62,11 +79,27 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 		if err != nil {
 			return err
 		}
+
+		log.Printf(fmt.Sprintf(
+			"[DEBUG] Created hardcoded address of type '%s', name '%s' and address '%s' in range '%s'", 
+			addrRange.Type,
+			name.(string),
+			hAddr.(string),
+			keyPrefix.(string),
+		))
 	} else {
-		_, err := conn.CreateGeneratedAddress(keyPrefix.(string), name.(string), addrIsGreater, incAddr)
-		if err != nil {
-			return err
+		gAddr, gAddrErr := conn.CreateGeneratedAddress(keyPrefix.(string), name.(string), addrIsGreater, incAddr)
+		if gAddrErr != nil {
+			return gAddrErr
 		}
+
+		log.Printf(fmt.Sprintf(
+			"[DEBUG] Created generated address of type '%s', name '%s' and address '%s' in range '%s'", 
+			addrRange.Type,
+			name.(string),
+			prettify(gAddr),
+			keyPrefix.(string),
+		))
 	}
 
 	d.SetId(name.(string))
@@ -101,6 +134,13 @@ func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeT
 		}
 
 		if !addrExists {
+			log.Printf(fmt.Sprintf(
+				"[WARN] Tried to read non-existent address of type '%s' and name '%s' in range '%s'", 
+				addrRange.Type,
+				name.(string),
+				keyPrefix.(string),
+			))
+
 			d.SetId("")
 			return nil
 		}
@@ -111,6 +151,14 @@ func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeT
 		return err
 	}
 	d.Set("address", prettify(addr))
+
+	log.Printf(fmt.Sprintf(
+		"[DEBUG] Read address of type '%s', name '%s' and address '%s' in range '%s'", 
+		addrRange.Type,
+		name.(string),
+		prettify(addr),
+		keyPrefix.(string),
+	))
 
 	return nil
 }
@@ -129,6 +177,13 @@ func resourceNetAddrAddressDelete(d *schema.ResourceData, meta interface{}, pars
 		}
 
 		if !addrExists {
+			log.Printf(fmt.Sprintf(
+				"[WARN] Deleting resource for non-existent address with name '%s' and address '%s' in range '%s'", 
+				name.(string),
+				addr,
+				keyPrefix.(string),
+			))
+
 			return nil
 		}
 	}
@@ -147,11 +202,25 @@ func resourceNetAddrAddressDelete(d *schema.ResourceData, meta interface{}, pars
 		if err != nil {
 			return err
 		}
+
+		log.Printf(fmt.Sprintf(
+			"[DEBUG] Deleted hardcoded address with name '%s' and address '%s' in range '%s'", 
+			name.(string),
+			addr,
+			keyPrefix.(string),
+		))
 	} else {
 		err := conn.DeleteGeneratedAddress(keyPrefix.(string), name.(string), addrAsBytes, prettify)
 		if err != nil {
 			return err
 		}
+
+		log.Printf(fmt.Sprintf(
+			"[DEBUG] Deleted generated address with name '%s' and address '%s' in range '%s'", 
+			name.(string),
+			addr,
+			keyPrefix.(string),
+		))
 	}
 
 	return nil
