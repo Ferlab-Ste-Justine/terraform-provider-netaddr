@@ -296,6 +296,8 @@ func (conn *EtcdConnection) deleteHardcodedAddressWithRetries(prefix string, nam
 			}
 			return conn.deleteHardcodedAddressWithRetries(prefix, name, address, prettify, addrIsLess, retries - 1)
 		}
+
+		return nil
 	}
 
 	tx := conn.Client.Txn(ctx).If(
