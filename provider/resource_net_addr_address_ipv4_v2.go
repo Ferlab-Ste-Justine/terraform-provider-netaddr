@@ -12,6 +12,7 @@ func resourceNetAddrAddressIpv4V2() *schema.Resource {
 		Description: "Ipv4 address. Version 2 adds support for assignment from multiple ranges (useful if you get an extra range of ips from the same subnet later on).",
 		Create: resourceNetAddrAddressIpv4V2Create,
 		Read:   resourceNetAddrAddressIpv4V2Read,
+		Update: resourceNetAddrAddressIpv4V2Update,
 		Delete: resourceNetAddrAddressIpv4V2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -51,6 +52,20 @@ func resourceNetAddrAddressIpv4V2() *schema.Resource {
 				Type:         schema.TypeString,
 				Computed:     true,
 			},
+			"retain_on_delete": &schema.Schema{
+				Description: "Whether to retain the address in etcd when the resource is deleted. Useful to set to true if you wish to migrate the address to another terraform project or modify the range_ids set (current range id of the address must be in the new set).",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    false,
+			},
+			"manage_existing": &schema.Schema{
+				Description: "Whether the address is possibly present when the resource is created. Setting this to true allows you to import the existing address without error.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    false,
+			},
 		},
 	}
 }
@@ -60,6 +75,10 @@ func resourceNetAddrAddressIpv4V2Create(d *schema.ResourceData, meta interface{}
 }
 
 func resourceNetAddrAddressIpv4V2Read(d *schema.ResourceData, meta interface{}) error {
+	return resourceNetAddrAddressV2Read(d, meta, "ipv4", address.Ipv4BytesToString)
+}
+
+func resourceNetAddrAddressIpv4V2Update(d *schema.ResourceData, meta interface{}) error {
 	return resourceNetAddrAddressV2Read(d, meta, "ipv4", address.Ipv4BytesToString)
 }
 

@@ -12,6 +12,7 @@ func resourceNetAddrAddressIpv4() *schema.Resource {
 		Description: "Ipv4 address.",
 		Create: resourceNetAddrAddressIpv4Create,
 		Read:   resourceNetAddrAddressIpv4Read,
+		Update: resourceNetAddrAddressIpv4Update,
 		Delete: resourceNetAddrAddressIpv4Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -43,6 +44,20 @@ func resourceNetAddrAddressIpv4() *schema.Resource {
 				Type:         schema.TypeString,
 				Computed:     true,
 			},
+			"retain_on_delete": &schema.Schema{
+				Description: "Whether to retain the address in etcd when the resource is deleted. Useful to set to true if you wish to migrate the address to another terraform project or migrate to the v2 version of the resource.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    false,
+			},
+			"manage_existing": &schema.Schema{
+				Description: "Whether the address is possibly present when the resource is created. Setting this to true allows you to import the existing address without error.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    false,
+			},
 		},
 	}
 }
@@ -52,6 +67,10 @@ func resourceNetAddrAddressIpv4Create(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceNetAddrAddressIpv4Read(d *schema.ResourceData, meta interface{}) error {
+	return resourceNetAddrAddressRead(d, meta, "ipv4", address.Ipv4BytesToString)
+}
+
+func resourceNetAddrAddressIpv4Update(d *schema.ResourceData, meta interface{}) error {
 	return resourceNetAddrAddressRead(d, meta, "ipv4", address.Ipv4BytesToString)
 }
 

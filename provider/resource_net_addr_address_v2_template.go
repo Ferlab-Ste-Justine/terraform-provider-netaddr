@@ -13,6 +13,9 @@ func resourceNetAddrAddressV2Create(d *schema.ResourceData, meta interface{}, ra
 	conn := meta.(address.EtcdConnection)
 	name, _ := d.GetOk("name")
 	hAddr, setAsHardcoded := d.GetOk("hardcoded_address")
+	manageExisting, manageExistingDefined := d.GetOk("manage_existing")
+
+	toleratePresent := (manageExistingDefined && manageExisting.(bool)) || (!conn.Strict)
 
 	keyPrefixes := GetRangeIdsFromResource(d)
 
@@ -22,7 +25,7 @@ func resourceNetAddrAddressV2Create(d *schema.ResourceData, meta interface{}, ra
 			return err
 		}
 
-		exists, prefix, genErr := conn.GenerateHardcodedAddressWithValidation(name.(string), keyPrefixes, addrAsBytes, rangeType, !conn.Strict, prettify)
+		exists, prefix, genErr := conn.GenerateHardcodedAddressWithValidation(name.(string), keyPrefixes, addrAsBytes, rangeType, toleratePresent, prettify)
 		if genErr != nil {
 			return genErr
 		}
@@ -47,7 +50,7 @@ func resourceNetAddrAddressV2Create(d *schema.ResourceData, meta interface{}, ra
 
 		d.Set("found_in_range", prefix)
 	} else {
-		exists, addr, prefix, genErr := conn.GenerateGeneratedAddressWithValidation(name.(string), keyPrefixes, rangeType, !conn.Strict, addrIsGreater, incAddr)
+		exists, addr, prefix, genErr := conn.GenerateGeneratedAddressWithValidation(name.(string), keyPrefixes, rangeType, toleratePresent, addrIsGreater, incAddr)
 		if genErr != nil {
 			return genErr
 		}
@@ -119,6 +122,11 @@ func resourceNetAddrAddressV2Delete(d *schema.ResourceData, meta interface{}, pa
 	keyPrefix := d.Get("found_in_range")
 	_, setAsHardcoded := d.GetOk("hardcoded_address")
 	addr := d.Get("address")
+	retain, retainDefined := d.GetOk("retain_on_delete")
+
+	if retainDefined && retain.(bool) {
+		return nil
+	}
 
 	addrAsBytes, err := parse(addr.(string))
 	if err != nil {

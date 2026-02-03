@@ -12,6 +12,7 @@ func resourceNetAddrAddressMac() *schema.Resource {
 		Description: "Mac address.",
 		Create: resourceNetAddrAddressMacCreate,
 		Read:   resourceNetAddrAddressMacRead,
+		Update: resourceNetAddrAddressMacUpdate,
 		Delete: resourceNetAddrAddressMacDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -43,6 +44,20 @@ func resourceNetAddrAddressMac() *schema.Resource {
 				Type:         schema.TypeString,
 				Computed:     true,
 			},
+			"retain_on_delete": &schema.Schema{
+				Description: "Whether to retain the address in etcd when the resource is deleted. Useful to set to true if you wish to migrate the address to another terraform project.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    false,
+			},
+			"manage_existing": &schema.Schema{
+				Description: "Whether the address is possibly present when the resource is created. Setting this to true allows you to import the existing address without error.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    false,
+			},
 		},
 	}
 }
@@ -52,6 +67,10 @@ func resourceNetAddrAddressMacCreate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceNetAddrAddressMacRead(d *schema.ResourceData, meta interface{}) error {
+	return resourceNetAddrAddressRead(d, meta, "mac", address.MacBytesToString)
+}
+
+func resourceNetAddrAddressMacUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceNetAddrAddressRead(d, meta, "mac", address.MacBytesToString)
 }
 
