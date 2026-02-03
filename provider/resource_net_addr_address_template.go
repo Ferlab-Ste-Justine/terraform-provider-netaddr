@@ -74,8 +74,8 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 
 func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify address.PrettifyAddr) error {
 	conn := meta.(address.EtcdConnection)
-	name, _ := d.GetOk("name")
-	keyPrefix, _ := d.GetOk("range_id")
+	name := d.Get("name")
+	keyPrefix := d.Get("range_id")
 
 	addr, found, err := conn.GetAddressWithValidation(name.(string), keyPrefix.(string), rangeType, !conn.Strict)
 	if err != nil {

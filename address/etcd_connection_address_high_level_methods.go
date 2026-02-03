@@ -60,7 +60,7 @@ func (conn *EtcdConnection) GenerateGeneratedAddressWithValidation(name string, 
 		return addrDetExists, genAddr, prefix, nil
 	}
 
-	return false, []byte{}, "", errors.New("Error creating address in range with prefix '%s': Associated ranges are full")
+	return false, []byte{}, "", errors.New(fmt.Sprintf("Error creating address '%s': Associated ranges are full", name))
 }
 
 func (conn *EtcdConnection) GenerateHardcodedAddressWithValidation(name string, prefixes []string, addr []byte, rangeType string, toleratePresent bool, prettify PrettifyAddr) (bool, string, error) {

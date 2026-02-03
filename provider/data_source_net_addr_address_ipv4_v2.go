@@ -21,7 +21,7 @@ func dataSourceNetAddrAddressIpv4V2() *schema.Resource {
 			},
 			"range_ids": {
 				Description: "Identifiers of the address ranges the address is tied to.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				ForceNew:    true,
 				Elem: &schema.Schema{

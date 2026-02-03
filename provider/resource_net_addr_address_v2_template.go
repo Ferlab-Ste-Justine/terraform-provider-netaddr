@@ -74,7 +74,7 @@ func resourceNetAddrAddressV2Create(d *schema.ResourceData, meta interface{}, ra
 	}
 	
 	d.SetId(name.(string))
-	return resourceNetAddrAddressRead(d, meta, rangeType, prettify)
+	return resourceNetAddrAddressV2Read(d, meta, rangeType, prettify)
 }
 
 func resourceNetAddrAddressV2Read(d *schema.ResourceData, meta interface{}, rangeType string, prettify address.PrettifyAddr) error {
