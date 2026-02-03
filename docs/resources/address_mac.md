@@ -50,6 +50,8 @@ output "test2_addr" {
 ### Optional
 
 - `hardcoded_address` (String) An optional input to fixate the address to a specific value.
+- `manage_existing` (Boolean) Whether the address is possibly present when the resource is created. Setting this to true allows you to import the existing address without error.
+- `retain_on_delete` (Boolean) Whether to retain the address in etcd when the resource is deleted. Useful to set to true if you wish to migrate the address to another terraform project.
 
 ### Read-Only
 
