@@ -7,11 +7,12 @@ import(
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rangeType string, parse ParseAddr, prettify PrettifyAddr, incAddr IncrementAddress, addrIsGreater AddressIsGreater) error {
+func resourceNetAddrAddressV2Create(d *schema.ResourceData, meta interface{}, rangeType string, parse ParseAddr, prettify PrettifyAddr, incAddr IncrementAddress, addrIsGreater AddressIsGreater) error {
 	conn := meta.(EtcdConnection)
-	name := d.Get("name")
-	keyPrefix := d.Get("range_id")
+	name, _ := d.GetOk("name")
 	hAddr, setAsHardcoded := d.GetOk("hardcoded_address")
+
+	keyPrefixes := GetRangeIdsFromResource(d)
 
 	if setAsHardcoded {
 		addrAsBytes, err := parse(hAddr.(string))
@@ -19,7 +20,7 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 			return err
 		}
 
-		exists, _, genErr := conn.GenerateHardcodedAddressWithValidation(name.(string), []string{keyPrefix.(string)}, addrAsBytes, rangeType, !conn.Strict, prettify)
+		exists, prefix, genErr := conn.GenerateHardcodedAddressWithValidation(name.(string), keyPrefixes, addrAsBytes, rangeType, !conn.Strict, prettify)
 		if genErr != nil {
 			return genErr
 		}
@@ -30,7 +31,7 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 				rangeType,
 				name.(string),
 				hAddr.(string),
-				keyPrefix.(string),
+				prefix,
 			))
 		} else {
 			log.Printf(fmt.Sprintf(
@@ -38,11 +39,13 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 				rangeType,
 				name.(string),
 				hAddr.(string),
-				keyPrefix.(string),
+				prefix,
 			))
 		}
+
+		d.Set("found_in_range", prefix)
 	} else {
-		exists, addr, _, genErr := conn.GenerateGeneratedAddressWithValidation(name.(string), []string{keyPrefix.(string)}, rangeType, !conn.Strict, addrIsGreater, incAddr)
+		exists, addr, prefix, genErr := conn.GenerateGeneratedAddressWithValidation(name.(string), keyPrefixes, rangeType, !conn.Strict, addrIsGreater, incAddr)
 		if genErr != nil {
 			return genErr
 		}
@@ -53,7 +56,7 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 				rangeType,
 				name.(string),
 				prettify(addr),
-				keyPrefix.(string),
+				prefix,
 			))
 		} else {
 			log.Printf(fmt.Sprintf(
@@ -61,19 +64,21 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 				rangeType,
 				name.(string),
 				prettify(addr),
-				keyPrefix.(string),
+				prefix,
 			))
 		}
+
+		d.Set("found_in_range", prefix)
 	}
 	
 	d.SetId(name.(string))
 	return resourceNetAddrAddressRead(d, meta, rangeType, prettify)
 }
 
-func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify PrettifyAddr) error {
+func resourceNetAddrAddressV2Read(d *schema.ResourceData, meta interface{}, rangeType string, prettify PrettifyAddr) error {
 	conn := meta.(EtcdConnection)
 	name, _ := d.GetOk("name")
-	keyPrefix, _ := d.GetOk("range_id")
+	keyPrefix := d.Get("found_in_range")
 
 	addr, found, err := conn.GetAddressWithValidation(name.(string), keyPrefix.(string), rangeType, !conn.Strict)
 	if err != nil {
@@ -106,10 +111,10 @@ func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeT
 	return nil
 }
 
-func resourceNetAddrAddressDelete(d *schema.ResourceData, meta interface{}, parse ParseAddr, prettify PrettifyAddr, addrIsLess AddressIsLess) error {
+func resourceNetAddrAddressV2Delete(d *schema.ResourceData, meta interface{}, parse ParseAddr, prettify PrettifyAddr, addrIsLess AddressIsLess) error {
 	conn := meta.(EtcdConnection)
 	name := d.Get("name")
-	keyPrefix := d.Get("range_id")
+	keyPrefix := d.Get("found_in_range")
 	_, setAsHardcoded := d.GetOk("hardcoded_address")
 	addr := d.Get("address")
 

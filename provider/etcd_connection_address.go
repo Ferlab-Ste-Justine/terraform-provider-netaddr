@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"slices"
 	"strings"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -336,7 +337,7 @@ func (conn *EtcdConnection) DeleteHardcodedAddress(prefix string, name string, a
 	  get an address from deleted/
 	  check during transaction:
 	    - picked address is present in deleted/
-		- name is absent from name/
+		- name is absent from name/ for all relevant prefixes
 	  transaction:
 	    - Remove picked address from deleted/
 		- Add picked address to generated/
@@ -347,33 +348,43 @@ func (conn *EtcdConnection) DeleteHardcodedAddress(prefix string, name string, a
 	  check during transaction:
 	    - next assignable address has the same version
 		- picked address is absent from hardcoded/
-		- name is absent from name/
+		- name is absent from name/ for all relevant prefixes
 	  transaction:
 	    - add picked address to generated/
 		- set next assignable address to picked address + 1
 		- add name to name/
 */
-func (conn *EtcdConnection) createGeneratedAddressWithRetries(prefix string, name string, addrIsGreater AddressIsGreater, incAddr IncrementAddress, retries int) ([]byte, error) {
+func (conn *EtcdConnection) createGeneratedAddressWithRetries(prefix string, mutExclPrefixes []string, name string, addrIsGreater AddressIsGreater, incAddr IncrementAddress, retries int) ([]byte, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conn.Timeout)*time.Second)
 	defer cancel()
 
 	addrKeyPrefixes := GenerateAddrEtcdKeyPrefixes(prefix)
 	addrRangeKeys := GenerateAddrRangeEtcdKeys(prefix)
 
+	nameNoPresent := []clientv3.Cmp{}
+	for _, mutExclPrefix := range mutExclPrefixes{
+		addrKeyMutExclPrefixes := GenerateAddrEtcdKeyPrefixes(mutExclPrefix)
+		nameNoPresent = append(nameNoPresent, clientv3.Compare(clientv3.Version(addrKeyMutExclPrefixes.Name + name), "=", 0))
+	}
+
 	deletedAddr, deletedAddrExists, _, deletedAddrErr := conn.getDeletedAddress(prefix)
 	if deletedAddrErr != nil {
 		if !shouldRetry(deletedAddrErr, retries) {
-			return []byte{}, deletedAddrErr
+			return []byte{}, false, deletedAddrErr
 		}
 
 		time.Sleep(100 * time.Millisecond)
-		return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+		return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 	}
 
 	if deletedAddrExists {
 		tx := conn.Client.Txn(ctx).If(
-			clientv3.Compare(clientv3.Version(addrKeyPrefixes.DeletedAddress + string(deletedAddr)), ">", 0),
-			clientv3.Compare(clientv3.Version(addrKeyPrefixes.Name + name), "=", 0),
+			slices.Concat(
+				[]clientv3.Cmp{
+					clientv3.Compare(clientv3.Version(addrKeyPrefixes.DeletedAddress + string(deletedAddr)), ">", 0),
+				},
+				nameNoPresent,
+			)...
 		).Then(
 			clientv3.OpDelete(addrKeyPrefixes.DeletedAddress + string(deletedAddr)),
 			clientv3.OpPut(addrKeyPrefixes.GeneratedAddress  + string(deletedAddr), name),
@@ -383,83 +394,89 @@ func (conn *EtcdConnection) createGeneratedAddressWithRetries(prefix string, nam
 		resp, txErr := tx.Commit()
 		if txErr != nil {
 			if !shouldRetry(txErr, retries) {
-				return []byte{}, txErr
+				return []byte{}, false, txErr
 			}
 	
 			time.Sleep(100 * time.Millisecond)
-			return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+			return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 		}
 	
 		if !resp.Succeeded {
 			if retries <= 0 {
-				return []byte{}, errors.New("Failed to create generated address: Selected name has already been assigned")
+				return []byte{}, false, errors.New("Failed to create generated address: Selected name has already been assigned")
 			}
 
-			return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+			return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 		}
 		
-		return deletedAddr, nil
+		return deletedAddr, false, nil
 	}
 
 	addrRange, addrRangeExists, addrRangeErr := conn.getAddrRangeWithRetries(prefix, 0)
 	if addrRangeErr != nil {
 		if !shouldRetry(addrRangeErr, retries) {
-			return []byte{}, addrRangeErr
+			return []byte{}, false, addrRangeErr
 		}
 
 		time.Sleep(100 * time.Millisecond)
-		return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+		return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 	}
 	if !addrRangeExists {
-		return []byte{}, errors.New("Error creating generated address: Network does not exist")
+		return []byte{}, false, errors.New("Error creating generated address: Range does not exist")
 	}
 
 	nextAddr, nextAddrVer, nextAddrErr := conn.getNextAddress(prefix)
 	if nextAddrErr != nil {
 		if !shouldRetry(nextAddrErr, retries) {
-			return []byte{}, nextAddrErr
+			return []byte{}, false, nextAddrErr
 		}
 
 		time.Sleep(100 * time.Millisecond)
-		return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+		return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 	}
 
 	if addrIsGreater(nextAddr, addrRange.LastAddress) {
-		return []byte{}, errors.New("Error creating generated address: Network ran out of addresses")
+		//Range is full
+		return []byte{}, true, nil
 	}
 
 	isHardcoded, isHarcodedErr := conn.addressIsHardcoded(prefix, nextAddr)
 	if isHarcodedErr != nil {
 		if !shouldRetry(isHarcodedErr, retries) {
-			return []byte{}, isHarcodedErr
+			return []byte{}, false, isHarcodedErr
 		}
 
 		time.Sleep(100 * time.Millisecond)
-		return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+		return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 	}
 
 	for isHardcoded {
 		nextAddr = incAddr(nextAddr)
 
 		if addrIsGreater(nextAddr, addrRange.LastAddress) {
-			return []byte{}, errors.New("Error creating generated address: Network ran out of addresses")
+			//Range is full
+			return []byte{}, true, nil
 		}
 
 		isHardcoded, isHarcodedErr = conn.addressIsHardcoded(prefix, nextAddr)
 		if isHarcodedErr != nil {
 			if !shouldRetry(isHarcodedErr, retries) {
-				return []byte{}, isHarcodedErr
+				return []byte{}, false, isHarcodedErr
 			}
 	
 			time.Sleep(100 * time.Millisecond)
-			return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+			return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 		}
 	}
 
 	tx := conn.Client.Txn(ctx).If(
-		clientv3.Compare(clientv3.Version(addrRangeKeys.NextAddress), "=", nextAddrVer),
-		clientv3.Compare(clientv3.Version(addrKeyPrefixes.HardcodedAddress + string(nextAddr)), "=", 0),
-		clientv3.Compare(clientv3.Version(addrKeyPrefixes.Name + name), "=", 0),
+		slices.Concat(
+			[]clientv3.Cmp{
+				clientv3.Compare(clientv3.Version(addrRangeKeys.NextAddress), "=", nextAddrVer),
+				clientv3.Compare(clientv3.Version(addrKeyPrefixes.HardcodedAddress + string(nextAddr)), "=", 0),
+			},
+			nameNoPresent,
+		)...
 	).Then(
 		clientv3.OpPut(addrKeyPrefixes.GeneratedAddress + string(nextAddr), name),
 		clientv3.OpPut(addrRangeKeys.NextAddress, string(incAddr(nextAddr))),
@@ -469,26 +486,34 @@ func (conn *EtcdConnection) createGeneratedAddressWithRetries(prefix string, nam
 	resp, txErr := tx.Commit()
 	if txErr != nil {
 		if !shouldRetry(txErr, retries) {
-			return []byte{}, txErr
+			return []byte{}, false, txErr
 		}
 
 		time.Sleep(100 * time.Millisecond)
-		return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+		return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 	}
 
 	if !resp.Succeeded {
 		if retries <= 0 {
-			return []byte{}, errors.New("Failed to create generated address: Selected name has already been assigned")
+			return []byte{}, false, errors.New("Failed to create generated address: Selected name has already been assigned")
 		}
 
-		return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, retries - 1)
+		return conn.createGeneratedAddressWithRetries(prefix, mutExclPrefixes, name, addrIsGreater, incAddr, retries - 1)
 	}
 
-	return nextAddr, nil
+	return nextAddr, false, nil
 }
 
 func (conn *EtcdConnection) CreateGeneratedAddress(prefix string, name string, addrIsGreater AddressIsGreater, incAddr IncrementAddress) ([]byte, error) {
-	return conn.createGeneratedAddressWithRetries(prefix, name, addrIsGreater, incAddr, conn.Retries)
+	addr, full, err := conn.createGeneratedAddressWithRetries(prefix, []string{prefix}, name, addrIsGreater, incAddr, conn.Retries)
+	if err != nil {
+		return addr, err
+	}
+	if full {
+		return addr, errors.New("Error creating generated address: Address range ran out of addresses")
+	}
+
+	return addr, nil
 }
 
 /* 
@@ -536,7 +561,7 @@ func (conn *EtcdConnection) DeleteGeneratedAddress(prefix string, name string, a
 	return conn.deleteGeneratedAddressWithRetries(prefix, name, address, prettify, conn.Retries)
 }
 
-func (conn *EtcdConnection) getAddressWithRetries(prefix string, name string, retries int) ([]byte, error) {
+func (conn *EtcdConnection) findAddressWithRetries(prefix string, name string, retries int) ([]byte, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conn.Timeout)*time.Second)
 	defer cancel()
 
@@ -545,22 +570,32 @@ func (conn *EtcdConnection) getAddressWithRetries(prefix string, name string, re
 	getRes, err := conn.Client.Get(ctx, addrKeyPrefixes.Name + name)
 	if err != nil {
 		if !shouldRetry(err, retries) {
-			return []byte{}, err
+			return []byte{}, false, err
 		}
 
 		time.Sleep(100 * time.Millisecond)
-		return conn.getAddressWithRetries(prefix, name, retries - 1)
+		return conn.findAddressWithRetries(prefix, name, retries - 1)
 	}
 
 	if len(getRes.Kvs) == 0 {
-		return []byte{}, errors.New(fmt.Sprintf("Error retrieving address with name '%s': Name not found", name))
+		return []byte{}, false, nil
 	}
 
-	return getRes.Kvs[0].Value, nil
+	return getRes.Kvs[0].Value, true, nil
+}
+
+func (conn *EtcdConnection) FindAddress(prefix string, name string) ([]byte, bool, error) {
+	return conn.findAddressWithRetries(prefix, name, conn.Retries)
 }
 
 func (conn *EtcdConnection) GetAddress(prefix string, name string) ([]byte, error) {
-	return conn.getAddressWithRetries(prefix, name, conn.Retries)
+	addr, found, err := conn.FindAddress(prefix, name)
+	
+	if err == nil && (!found) {
+		return []byte{}, errors.New(fmt.Sprintf("Error retrieving address with name '%s': Name not found", name))
+	}
+
+	return addr, err
 }
 
 func (conn *EtcdConnection) getAddressDetailsWithRetries(prefix string, name string, retries int) (bool, bool, []byte, error) {
@@ -598,4 +633,42 @@ func (conn *EtcdConnection) getAddressDetailsWithRetries(prefix string, name str
 
 func (conn *EtcdConnection) GetAddressDetails(prefix string, name string) (bool, bool, []byte, error) {
 	return conn.getAddressDetailsWithRetries(prefix, name, conn.Retries)
+}
+
+//Multi-range methods
+func (conn *EtcdConnection) FindAddressRangeByBoundaries(prefixes []string, addr []byte) (string, AddressRange, bool, error) {
+	for _, prefix := range prefixes {
+		addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(prefix)
+		if addrRangeErr != nil {
+			return "", AddressRange{}, false, addrRangeErr
+		}
+		if !addrRangeExists {
+			return "", AddressRange{}, false, errors.New(fmt.Sprintf("Range with prefix '%s' does not exist", prefix))
+		}
+
+		if len(addr) != len(addrRange.FirstAddress) {
+			return "", AddressRange{}, false, errors.New(fmt.Sprintf("Range with prefix '%s' does not match passed address format: Address type mismatch", prefix))
+		}
+
+		if AddressWithinBoundaries(addr, addrRange.FirstAddress, addrRange.LastAddress) {
+			return prefix, addrRange, true, nil
+		}
+	}
+
+	return "", AddressRange{}, false, nil
+}
+
+func (conn *EtcdConnection) FindAddressDetailsInRanges(prefixes []string, name string) (bool, bool, []byte, string, error) {
+	for _, prefix := range prefixes {
+		addrExists, addrIsHardcoded, addr, detailsErr := conn.GetAddressDetails(prefix, name)
+		if detailsErr != nil {
+			return false, false, []byte{}, "", detailsErr
+		}
+
+		if addrExists {
+			return addrExists, addrIsHardcoded, addr, prefix, nil
+		}
+	}
+
+	return false, false, []byte{}, "", nil
 }
