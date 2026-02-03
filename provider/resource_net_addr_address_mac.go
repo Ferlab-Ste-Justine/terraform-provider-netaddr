@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -46,13 +48,13 @@ func resourceNetAddrAddressMac() *schema.Resource {
 }
 
 func resourceNetAddrAddressMacCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourceNetAddrAddressCreate(d, meta, "mac", MacStringToBytes, MacBytesToString, IncAddressBy1, AddressGreaterThan)
+	return resourceNetAddrAddressCreate(d, meta, "mac", address.MacStringToBytes, address.MacBytesToString, address.IncAddressBy1, address.AddressGreaterThan)
 }
 
 func resourceNetAddrAddressMacRead(d *schema.ResourceData, meta interface{}) error {
-	return resourceNetAddrAddressRead(d, meta, "mac", MacBytesToString)
+	return resourceNetAddrAddressRead(d, meta, "mac", address.MacBytesToString)
 }
 
 func resourceNetAddrAddressMacDelete(d *schema.ResourceData, meta interface{}) error {
-	return resourceNetAddrAddressDelete(d, meta, MacStringToBytes, MacBytesToString, AddressLessThan)
+	return resourceNetAddrAddressDelete(d, meta, address.MacStringToBytes, address.MacBytesToString, address.AddressLessThan)
 }

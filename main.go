@@ -1,7 +1,8 @@
 package main
 
 import (
-	"ferlab/terraform-provider-netaddr/provider"
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/provider"
+	
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 

@@ -1,14 +1,16 @@
 package provider
 
 import(
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rangeType string, parse ParseAddr, prettify PrettifyAddr, incAddr IncrementAddress, addrIsGreater AddressIsGreater) error {
-	conn := meta.(EtcdConnection)
+func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rangeType string, parse address.ParseAddr, prettify address.PrettifyAddr, incAddr address.IncrementAddress, addrIsGreater address.AddressIsGreater) error {
+	conn := meta.(address.EtcdConnection)
 	name := d.Get("name")
 	keyPrefix := d.Get("range_id")
 	hAddr, setAsHardcoded := d.GetOk("hardcoded_address")
@@ -70,8 +72,8 @@ func resourceNetAddrAddressCreate(d *schema.ResourceData, meta interface{}, rang
 	return resourceNetAddrAddressRead(d, meta, rangeType, prettify)
 }
 
-func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify PrettifyAddr) error {
-	conn := meta.(EtcdConnection)
+func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify address.PrettifyAddr) error {
+	conn := meta.(address.EtcdConnection)
 	name, _ := d.GetOk("name")
 	keyPrefix, _ := d.GetOk("range_id")
 
@@ -106,8 +108,8 @@ func resourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeT
 	return nil
 }
 
-func resourceNetAddrAddressDelete(d *schema.ResourceData, meta interface{}, parse ParseAddr, prettify PrettifyAddr, addrIsLess AddressIsLess) error {
-	conn := meta.(EtcdConnection)
+func resourceNetAddrAddressDelete(d *schema.ResourceData, meta interface{}, parse address.ParseAddr, prettify address.PrettifyAddr, addrIsLess address.AddressIsLess) error {
+	conn := meta.(address.EtcdConnection)
 	name := d.Get("name")
 	keyPrefix := d.Get("range_id")
 	_, setAsHardcoded := d.GetOk("hardcoded_address")

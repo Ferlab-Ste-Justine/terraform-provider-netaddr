@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -54,13 +56,13 @@ func resourceNetAddrAddressIpv4V2() *schema.Resource {
 }
 
 func resourceNetAddrAddressIpv4V2Create(d *schema.ResourceData, meta interface{}) error {
-	return resourceNetAddrAddressV2Create(d, meta, "ipv4", Ipv4StringToBytes, Ipv4BytesToString, IncAddressBy1, AddressGreaterThan)
+	return resourceNetAddrAddressV2Create(d, meta, "ipv4", address.Ipv4StringToBytes, address.Ipv4BytesToString, address.IncAddressBy1, address.AddressGreaterThan)
 }
 
 func resourceNetAddrAddressIpv4V2Read(d *schema.ResourceData, meta interface{}) error {
-	return resourceNetAddrAddressV2Read(d, meta, "ipv4", Ipv4BytesToString)
+	return resourceNetAddrAddressV2Read(d, meta, "ipv4", address.Ipv4BytesToString)
 }
 
 func resourceNetAddrAddressIpv4V2Delete(d *schema.ResourceData, meta interface{}) error {
-	return resourceNetAddrAddressV2Delete(d, meta, Ipv4StringToBytes, Ipv4BytesToString, AddressLessThan)
+	return resourceNetAddrAddressV2Delete(d, meta, address.Ipv4StringToBytes, address.Ipv4BytesToString, address.AddressLessThan)
 }

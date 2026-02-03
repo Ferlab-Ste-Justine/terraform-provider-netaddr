@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -31,5 +33,5 @@ func dataSourceNetAddrRangeIpv4() *schema.Resource {
 }
 
 func dataSourceNetAddrRangeIpv4Read(d *schema.ResourceData, meta interface{}) error {
-	return dataSourceNetAddrRangeRead(d, meta, "ipv4", Ipv4BytesToString)
+	return dataSourceNetAddrRangeRead(d, meta, "ipv4", address.Ipv4BytesToString)
 }

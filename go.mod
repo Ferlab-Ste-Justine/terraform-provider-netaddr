@@ -1,4 +1,4 @@
-module ferlab/terraform-provider-netaddr
+module github.com/Ferlab-Ste-Justine/terraform-provider-netaddr
 
 go 1.22.0
 

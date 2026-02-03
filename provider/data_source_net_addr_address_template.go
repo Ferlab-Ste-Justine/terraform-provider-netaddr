@@ -1,14 +1,16 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify PrettifyAddr) error {
-	conn := meta.(EtcdConnection)
+func dataSourceNetAddrAddressRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify address.PrettifyAddr) error {
+	conn := meta.(address.EtcdConnection)
 	name := d.Get("name").(string)
 	keyPrefix := d.Get("range_id").(string)
 

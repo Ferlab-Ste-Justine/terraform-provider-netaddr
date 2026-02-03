@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -153,7 +155,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return nil, errors.New(fmt.Sprintf("Failed to connect to etcd servers: %s", err.Error()))
 	}
 
-	return EtcdConnection{
+	return address.EtcdConnection{
 		Client:  cli,
 		Timeout: requestTimeout,
 		Retries: retries,

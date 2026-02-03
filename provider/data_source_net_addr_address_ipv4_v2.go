@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -42,5 +44,5 @@ func dataSourceNetAddrAddressIpv4V2() *schema.Resource {
 }
 
 func dataSourceNetAddrAddressIpv4V2Read(d *schema.ResourceData, meta interface{}) error {
-	return dataSourceNetAddrAddressV2Read(d, meta, "ipv4", Ipv4BytesToString)
+	return dataSourceNetAddrAddressV2Read(d, meta, "ipv4", address.Ipv4BytesToString)
 }

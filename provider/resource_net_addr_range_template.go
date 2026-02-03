@@ -1,6 +1,8 @@
 package provider
 
 import(
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"bytes"
 	"errors"
 	"fmt"
@@ -8,8 +10,8 @@ import(
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceNetAddrRangeCreate(d *schema.ResourceData, meta interface{}, rangeType string, parse ParseAddr, prettify PrettifyAddr) error {
-	conn := meta.(EtcdConnection)
+func resourceNetAddrRangeCreate(d *schema.ResourceData, meta interface{}, rangeType string, parse address.ParseAddr, prettify address.PrettifyAddr) error {
+	conn := meta.(address.EtcdConnection)
 	keyPrefix, _ := d.GetOk("key_prefix")
 
 	firstAddr, _ := d.GetOk("first_address")
@@ -24,7 +26,7 @@ func resourceNetAddrRangeCreate(d *schema.ResourceData, meta interface{}, rangeT
 		return errors.New(fmt.Sprintf("Error creating address range: %s", lastAddrErr.Error()))
 	}
 
-	addrRange := AddressRange{
+	addrRange := address.AddressRange{
 		Type: rangeType,
 		FirstAddress: firstAddrBytes,
 		LastAddress: lastAddrBytes,
@@ -54,9 +56,9 @@ func resourceNetAddrRangeCreate(d *schema.ResourceData, meta interface{}, rangeT
 	return resourceNetAddrRangeRead(d, meta, rangeType, prettify)
 }
 
-func resourceNetAddrRangeRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify PrettifyAddr) error {
+func resourceNetAddrRangeRead(d *schema.ResourceData, meta interface{}, rangeType string, prettify address.PrettifyAddr) error {
 	keyPrefix := d.Id()
-	conn := meta.(EtcdConnection)
+	conn := meta.(address.EtcdConnection)
 
 	addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(keyPrefix)
 	if !addrRangeExists {
@@ -82,7 +84,7 @@ func resourceNetAddrRangeRead(d *schema.ResourceData, meta interface{}, rangeTyp
 }
 
 func resourceNetAddrRangeDelete(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(EtcdConnection)
+	conn := meta.(address.EtcdConnection)
 	keyPrefix, _ := d.GetOk("key_prefix")
 
 	if !conn.Strict {

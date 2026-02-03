@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -121,5 +123,5 @@ func dataSourceNetAddrRangeKeyspaceMac() *schema.Resource {
 
 
 func dataSourceNetAddrRangeKeyspaceMacRead(d *schema.ResourceData, meta interface{}) error {
-	return dataSourceNetAddrRangeKeyspaceRead(d, meta, "mac", MacBytesToString)
+	return dataSourceNetAddrRangeKeyspaceRead(d, meta, "mac", address.MacBytesToString)
 }

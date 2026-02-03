@@ -1,14 +1,16 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceNetAddrRangeUsageRead(d *schema.ResourceData, meta interface{}, rangeType string, rangeAddrCount RangeAddressCount) error {
-	conn := meta.(EtcdConnection)
+func dataSourceNetAddrRangeUsageRead(d *schema.ResourceData, meta interface{}, rangeType string, rangeAddrCount address.RangeAddressCount) error {
+	conn := meta.(address.EtcdConnection)
 	keyPrefix := d.Get("range_id").(string)
 
 	addrRange, addrRangeExists, addrRangeErr := conn.GetAddrRange(keyPrefix)
@@ -22,7 +24,7 @@ func dataSourceNetAddrRangeUsageRead(d *schema.ResourceData, meta interface{}, r
 		return errors.New(fmt.Sprintf("Error retrieving address range at prefix '%s': Range type doesn't match", keyPrefix))
 	}
 
-	usage, usageErr := conn.GetAddrRangeUsage(keyPrefix, Ipv4RangeAddressCount)
+	usage, usageErr := conn.GetAddrRangeUsage(keyPrefix, address.Ipv4RangeAddressCount)
 	if usageErr != nil {
 		return usageErr
 	}

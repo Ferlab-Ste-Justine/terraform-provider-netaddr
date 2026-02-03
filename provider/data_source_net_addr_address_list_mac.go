@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Ferlab-Ste-Justine/terraform-provider-netaddr/address"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -42,5 +44,5 @@ func dataSourceNetAddrAddressListMac() *schema.Resource {
 }
 
 func dataSourceNetAddrAddressListMacRead(d *schema.ResourceData, meta interface{}) error {
-	return dataSourceNetAddrAddressListRead(d, meta, "mac", MacBytesToString)
+	return dataSourceNetAddrAddressListRead(d, meta, "mac", address.MacBytesToString)
 }
