@@ -112,3 +112,33 @@ When being deleted, an entry in the deleted addresses is created for the address
 When being created, a look is taken at deleted addresses first and if any is found, it is assigned (and removed from the pool of deleted addresses). Otherwise, a look is taken at the **NextAddress** pointer of the address range to determine the next address to assign. The pointer is incremented to skip over any pre-existing hardcoded addresses until an available address is found which is then assigned (and the **NextAddress** pointer is further incremented since that address is now assigned). Should the **NextAddress** pointer exceed **LastAddress** for the address range, an error is returned as there are no more addresses available to assign.
 
 When being deleted, an entry in the deleted addresses is created for the address (since generated addresses are always behind the **NextAddress** pointer).
+
+# V2 Version of Ipv4 Addresses
+
+## Note on V2 and V1
+
+We recently added a v2 version for ipv4 addresses to support multiple available address ranges for the same address (technically, we could very easily do the same for MAC addresses, but we believe their range tend to be larger which is the case for us).
+
+The use case (based on recent real life experience), is that the network admins assign you an ip range in a network, you exhaust that ip range and they give you another additional ip range that is part of the same network.
+
+The V2 version handle manages addresses in many ranges so that you don't have to keep track of which address is in which range.
+
+The etcd address key structure and logic to interact with that key structure remains unchanged for v2 relative to v1. 
+
+The main thing that the v2 does is fetch an address from several ranges on address creation (skipping over ranges that are full) and look at all those ranges when reading the address for its data source. 
+
+For the resource, the range the address was created in is added to the resource in the terraform state as a performance optimization (and for informative purposes) and the resource act like v1 for the remainder of its lifecycle.
+
+All that to say that if you add a network range and start adding v2 addresses while you still have v1 addresses for the first range of a network, that will work just fine and you won't have any data conflicts.
+
+You can also have a v1 address, access that address elsewhere with a v2 data source and it won't be a problem (the v2 data source will just look at its range and find it in the range the v1 resource put it in). However, you should note use a v1 data source for a v2 address resource (the data source will only have a single range to find the address in and may be missing one of the ranges the address was assigned to by the resource).
+
+If you want to migrate v1 addresses to v2 without losing the addresses, you can set **retain_on_delete** to **true** for the v1 resource (which won't delete the address in the range when the terraform resource is deleted), set **manage_existing** to **true** on the replacement v2 resource (which will prevent resource creation from tiggering an error when the address is found during the creation sanity check) and you will be set. 
+
+## Note on Adding More Ranges for V2
+
+The migration path from V1 ipv4 address to V2 ipv4 address will also work in-place for an existing V2 ipv4 address you want to add an additional extra range to.
+
+When you change the ip ranges of the address, it will trigger a re-creation of the resource in the terraform lifecycle, but by putting **retain_on_delete** and **manage_existing** to true, the terraform resource deletion will be a no-op for the address and the terraform resource creation won't trigger an error when the address is found (and essential be a no-op also for the address). Just make sure that you are just using this technique to add ranges and no remove them, or you might get into trouble.
+
+Note that you can also use the above technique to migrate the management of an address between different terraform pipelines without having to change it or hardcode it.
