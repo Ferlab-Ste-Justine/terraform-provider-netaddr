@@ -131,7 +131,7 @@ For the resource, the range the address was created in is added to the resource 
 
 All that to say that if you add a network range and start adding v2 addresses while you still have v1 addresses for the first range of a network, that will work just fine and you won't have any data conflicts.
 
-You can also have a v1 address, access that address elsewhere with a v2 data source and it won't be a problem (the v2 data source will just look at its range and find it in the range the v1 resource put it in). However, you should note use a v1 data source for a v2 address resource (the data source will only have a single range to find the address in and may be missing one of the ranges the address was assigned to by the resource).
+You can also have a v1 address, access that address elsewhere with a v2 data source and it won't be a problem (the v2 data source will just look at its range and find it in the range the v1 resource put it in). However, you should not use a v1 data source for a v2 address resource (the data source will only have a single range to find the address in and may be missing one of the ranges the address was assigned to by the resource).
 
 If you want to migrate v1 addresses to v2 without losing the addresses, you can set **retain_on_delete** to **true** for the v1 resource (which won't delete the address in the range when the terraform resource is deleted), set **manage_existing** to **true** on the replacement v2 resource (which will prevent resource creation from tiggering an error when the address is found during the creation sanity check) and you will be set. 
 
